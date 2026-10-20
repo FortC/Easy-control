@@ -43,12 +43,27 @@ pnpm dev:desktop        # Vite(5173) + Electron
 5. **任务与日历** 观察状态：已排程 → 等待执行设备 → 执行中 → 已提交 → 平台审核中 → **已发布**
 6. **结果与数据** 看回执、链接与模拟指标；**异常处理** 看是否有需人工的事项
 
-### 冒烟测试
+### 测试
 
 ```bash
 pnpm smoke              # 24 项断言：完整闭环 + 审批失效 + 验证码转人工 + 账号暂停 + 幂等重报
 pnpm test               # 状态机 / 信封 / 发布前检查单测（vitest）
+pnpm release            # 发布流水线（见下），内含打包产物 GUI 实测
 ```
+
+### 打包与持续迭代
+
+安装包统一产出在项目目录 `apps/desktop/release/`（不入库）：
+
+- **一条命令出验证过的安装包**：`pnpm release`
+  自动完成：确保 PostgreSQL → 迁移 → 确保后台在线（复用或启动 api+worker）→ 类型检查 →
+  单测 → 冒烟 → 渲染层构建 → electron-builder 打包（NSIS）→ **对打包产物做 GUI 端到端实测**
+  → 报告产物路径。任一步失败立即终止，全部通过才算可交付。
+- **日常迭代**：改代码 → `pnpm test` 自测 → `pnpm release` 出包。后台在线时整条约 3–5 分钟。
+- **版本迭代**：迭代内容写入 `CHANGELOG.md` 的 `[Unreleased]`，随后用
+  easy-publish-check 的 `bump_version.py --level auto --json` 判定级别并同步两处 package.json
+  （根 + apps/desktop），把 `[Unreleased]` 改为 `[x.y.z] - 日期`，提交后 `pnpm release`。
+- **产物**：`AIPeople Setup <版本>.exe`（NSIS 安装程序）与 `win-unpacked/AIPeople.exe`（免安装版）。
 
 另有 `npx tsx scripts/live-check.ts`：在真实进程（api+worker+runner 运行中）创建 75 秒后排程的任务并轮询到 PUBLISHED。
 

@@ -19,6 +19,7 @@
     "dev": "concurrently -n api,worker,runner -c blue,green,magenta \"pnpm dev:api\" \"pnpm dev:worker\" \"pnpm dev:runner\"",
     "dev:desktop": "pnpm --filter @aipeople/desktop dev",
     "dist": "pnpm --filter @aipeople/desktop dist",
+    "release": "tsx scripts/make-installer.ts",
     "smoke": "tsx scripts/smoke.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json",
