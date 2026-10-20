@@ -1,4 +1,5 @@
-import { NavLink, Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { NavLink, Navigate, Route, Routes } from "react-router-dom";
+import { useEffect, useState } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -8,9 +9,10 @@ import {
   CalendarClock,
   BarChart3,
   AlertTriangle,
-  LogOut,
-} from "lucide-react";import { getToken, logout } from "./api.js";
-import LoginPage from "./pages/LoginPage.js";
+  RefreshCw,
+  ServerOff,
+} from "lucide-react";
+import { API_BASE, ensureLocalLogin, logout } from "./api.js";
 import OverviewPage from "./pages/OverviewPage.js";
 import AccountsPage from "./pages/AccountsPage.js";
 import ModelsPage from "./pages/ModelsPage.js";
@@ -32,7 +34,6 @@ const NAV = [
 ];
 
 function Shell() {
-  const navigate = useNavigate();
   return (
     <div className="app-shell">
       <aside className="sidebar">
@@ -55,15 +56,8 @@ function Shell() {
           ))}
         </nav>
         <div className="side-footer">
-          <span>v0.1 骨架</span>
-          <button
-            onClick={() => {
-              logout();
-              navigate("/login");
-            }}
-          >
-            <LogOut size={12} style={{ verticalAlign: -2 }} /> 退出
-          </button>
+          <span>个人版 v0.3</span>
+          <span className="mono" style={{ fontSize: 10 }}>免登录模式</span>
         </div>
       </aside>
       <main className="main">
@@ -83,18 +77,88 @@ function Shell() {
   );
 }
 
+function ConnectingScreen() {
+  return (
+    <div className="login-wrap">
+      <div className="login-card" style={{ textAlign: "center" }}>
+        <span className="brand-mark" style={{ width: 44, height: 44, borderRadius: 10, margin: "0 auto 12px" }}>
+          <Bot size={24} strokeWidth={2} />
+        </span>
+        <h1 style={{ fontSize: 17, margin: "0 0 6px" }}>AI People 运营工作台</h1>
+        <div className="sub">正在连接本地后台服务…</div>
+      </div>
+    </div>
+  );
+}
+
+function ConnectErrorScreen({ message }: { message: string }) {
+  const [backend, setBackend] = useState(API_BASE);
+  return (
+    <div className="login-wrap">
+      <div className="login-card">
+        <div className="row" style={{ gap: 12, marginBottom: 14 }}>
+          <span className="brand-mark" style={{ width: 40, height: 40, borderRadius: 10, background: "var(--danger)" }}>
+            <ServerOff size={20} strokeWidth={2} />
+          </span>
+          <div>
+            <h1 style={{ fontSize: 17, margin: 0 }}>无法连接后台服务</h1>
+            <div className="sub">工作台需要后台 API 才能运行</div>
+          </div>
+        </div>
+        <div className="notice" style={{ wordBreak: "break-all" }}>
+          {message}
+        </div>
+        <ol className="muted" style={{ fontSize: 12, lineHeight: 1.9, paddingLeft: 18, margin: "0 0 14px" }}>
+          <li>
+            在项目目录启动后台：<code>pnpm db:up</code> 然后 <code>pnpm dev</code>
+          </li>
+          <li>后台部署在其他机器时，把下方地址改成对应服务器</li>
+          <li>点击「重试连接」</li>
+        </ol>
+        <div className="field">
+          <label>后台地址</label>
+          <input value={backend} onChange={(e) => setBackend(e.target.value)} placeholder="http://localhost:8787" />
+        </div>
+        <button
+          className="btn primary"
+          style={{ width: "100%" }}
+          onClick={() => {
+            localStorage.setItem("aipeople_backend", backend.replace(/\/$/, ""));
+            logout();
+            // 地址可能已更改，重载页面让 api.ts 重新读取配置
+            window.location.reload();
+          }}
+        >
+          <RefreshCw size={13} style={{ verticalAlign: -2 }} /> 重试连接
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
-  if (!getToken()) {
-    return (
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="*" element={<Navigate to="/login" replace />} />
-      </Routes>
-    );
+  const [phase, setPhase] = useState<"connecting" | "ready" | "error">("connecting");
+  const [error, setError] = useState("");
+
+  async function connect() {
+    setPhase("connecting");
+    try {
+      await ensureLocalLogin();
+      setPhase("ready");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+      setPhase("error");
+    }
   }
+
+  useEffect(() => {
+    void connect();
+  }, []);
+
+  if (phase === "connecting") return <ConnectingScreen />;
+  if (phase === "error") return <ConnectErrorScreen message={error} />;
   return (
     <Routes>
-      <Route path="/login" element={<Navigate to="/" replace />} />
       <Route path="/*" element={<Shell />} />
     </Routes>
   );

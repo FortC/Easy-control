@@ -15,6 +15,24 @@ export function logout(): void {
   localStorage.removeItem(TOKEN_KEY);
 }
 
+/**
+ * 个人模式免登录：优先复用本地令牌（校验其有效性），失败则自动以本地账号连接后台。
+ */
+export async function ensureLocalLogin(): Promise<void> {
+  const existing = getToken();
+  if (existing) {
+    try {
+      await api("GET", "/me");
+      return;
+    } catch {
+      logout();
+    }
+  }
+  const result = await api<{ token: string }>("POST", "/auth/local");
+  if (!result.token) throw new Error("后台未返回访问令牌");
+  setToken(result.token);
+}
+
 export class ApiError extends Error {
   constructor(
     public status: number,

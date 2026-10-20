@@ -2,8 +2,9 @@
 const { app, BrowserWindow, shell, Tray, Menu, nativeImage, dialog } = require("electron");
 const path = require("node:path");
 
-const START_URL = process.env.ELECTRON_START_URL || `file://${path.join(__dirname, "../dist-renderer/index.html")}`;
-const isDev = Boolean(process.env.ELECTRON_START_URL);
+// 开发模式走 Vite；打包模式必须用 loadFile（file:// 手拼路径在 Windows 会因反斜杠加载失败）
+const DEV_SERVER_URL = process.env.ELECTRON_START_URL || null;
+const INDEX_FILE = path.join(__dirname, "../dist-renderer/index.html");
 
 // 发布人信息（easy-publish-check 统一维护，与 package.json author 一致）
 const AUTHOR = Object.freeze({ name: "clb", email: "lamthebest@foxmail.com" });
@@ -83,11 +84,26 @@ function createWindow() {
     return { action: "deny" };
   });
 
-  mainWindow.loadURL(START_URL).then(() => {
-    // 确保窗口可见并置前（避免被其他窗口遮挡）
-    mainWindow.show();
-    mainWindow.focus();
+  // 渲染层加载失败要显式报错，不允许静默白屏
+  mainWindow.webContents.on("did-fail-load", (_event, code, description, url) => {
+    void dialog.showErrorBox(
+      "界面加载失败",
+      `渲染层加载失败（错误码 ${code}）\n${description}\n地址：${url}`,
+    );
   });
+
+  const loaded = DEV_SERVER_URL
+    ? mainWindow.loadURL(DEV_SERVER_URL)
+    : mainWindow.loadFile(INDEX_FILE);
+  loaded
+    .then(() => {
+      // 确保窗口可见并置前（避免被其他窗口遮挡）
+      mainWindow.show();
+      mainWindow.focus();
+    })
+    .catch((error) => {
+      void dialog.showErrorBox("界面加载失败", String(error instanceof Error ? error.message : error));
+    });
 }
 
 function createTray() {
