@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+  - packages/*
+  - packages/connectors/*
+
+# 构建脚本白名单：esbuild/electron 需要；@lucasygu/redbook 的 postinstall
+# （注册外部技能钩子）按方案 §3 要求显式禁止执行。
+onlyBuiltDependencies:
+  - esbuild
+  - electron
+allowBuilds:
+  '@lucasygu/redbook': false
+  esbuild: true
+  electron: true

@@ -1,0 +1,29 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "lib": ["ES2023", "DOM", "DOM.Iterable"],
+    "types": ["node"],
+    "strict": true,
+    "noUncheckedIndexedAccess": false,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "isolatedModules": true,
+    "resolveJsonModule": true,
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": [
+    "packages/*/src/**/*.ts",
+    "packages/connectors/*/src/**/*.ts",
+    "apps/api/src/**/*.ts",
+    "apps/worker/src/**/*.ts",
+    "apps/runner/src/**/*.ts",
+    "apps/desktop/src/**/*.ts",
+    "apps/desktop/vite.config.ts",
+    "scripts/**/*.ts",
+    "infra/db/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", ".research", "apps/desktop/electron"]
+}

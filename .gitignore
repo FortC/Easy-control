@@ -1,0 +1,20 @@
+# Private source snapshots used only for review
+.research/
+
+# Local dependencies, secrets and generated files
+node_modules/
+dist/
+build/
+out/
+.env
+.env.*
+!.env.example
+cookies.json
+cookies-*.json
+*.log
+*.tsbuildinfo
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+.local/
+data/
