@@ -20,3 +20,4 @@ cookies-*.json
 *.sqlite-shm
 .local/
 data/
+apps/desktop/dist-renderer/
