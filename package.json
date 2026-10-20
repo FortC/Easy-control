@@ -1,8 +1,9 @@
 {
   "name": "aipeople",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
+  "author": "clb <lamthebest@foxmail.com>",
   "engines": {
     "node": ">=22.5"
   },
@@ -11,17 +12,20 @@
     "db:down": "docker compose down",
     "db:migrate": "tsx infra/db/migrate.ts",
     "db:seed": "tsx scripts/seed.ts",
+    "icons": "tsx scripts/render-icons.ts",
     "dev:api": "tsx watch apps/api/src/main.ts",
     "dev:worker": "tsx watch apps/worker/src/main.ts",
     "dev:runner": "tsx apps/runner/src/main.ts",
     "dev": "concurrently -n api,worker,runner -c blue,green,magenta \"pnpm dev:api\" \"pnpm dev:worker\" \"pnpm dev:runner\"",
     "dev:desktop": "pnpm --filter @aipeople/desktop dev",
+    "dist": "pnpm --filter @aipeople/desktop dist",
     "smoke": "tsx scripts/smoke.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "build": "tsc --noEmit -p tsconfig.json"
   },
   "devDependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^22.10.0",
     "@types/pg": "^8.11.0",
     "concurrently": "^9.1.0",

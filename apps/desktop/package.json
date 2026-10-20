@@ -1,13 +1,17 @@
 {
   "name": "@aipeople/desktop",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
   "main": "electron/main.cjs",
+  "author": "clb <lamthebest@foxmail.com>",
+  "description": "AI People 运营工作台：抖音、小红书与微博的 AI 运营助手",
   "scripts": {
     "dev:vite": "vite",
     "dev": "concurrently -n vite,electron -c green,yellow \"vite\" \"wait-on tcp:127.0.0.1:5173 && cross-env-shell ELECTRON_START_URL=http://127.0.0.1:5173 electron .\"",
-    "build": "vite build"
+    "build": "vite build",
+    "dist": "npm run build && electron-builder --win nsis --config electron-builder.yml",
+    "dist:portable": "npm run build && electron-builder --win portable --config electron-builder.yml"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.62.0",
@@ -23,6 +27,7 @@
     "concurrently": "^9.1.0",
     "cross-env": "^7.0.3",
     "electron": "^33.2.0",
+    "electron-builder": "^25.1.8",
     "vite": "^6.0.0",
     "wait-on": "^8.0.0"
   }

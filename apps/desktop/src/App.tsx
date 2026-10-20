@@ -9,8 +9,7 @@ import {
   BarChart3,
   AlertTriangle,
   LogOut,
-} from "lucide-react";
-import { getToken, logout } from "./api.js";
+} from "lucide-react";import { getToken, logout } from "./api.js";
 import LoginPage from "./pages/LoginPage.js";
 import OverviewPage from "./pages/OverviewPage.js";
 import AccountsPage from "./pages/AccountsPage.js";
@@ -38,7 +37,14 @@ function Shell() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          AI People <small>运营工作台</small>
+          <span className="brand-mark">
+            <Bot size={16} strokeWidth={2} />
+          </span>
+          <div>
+            AI People
+            <br />
+            <small>运营工作台</small>
+          </div>
         </div>
         <nav>
           {NAV.map((item) => (

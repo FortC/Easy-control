@@ -6,6 +6,8 @@ node_modules/
 dist/
 build/
 out/
+release/
+apps/desktop/release/
 .env
 .env.*
 !.env.example

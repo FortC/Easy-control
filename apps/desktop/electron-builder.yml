@@ -1,0 +1,36 @@
+# electron-builder 打包配置（Windows 首发）
+appId: dev.aipeople.desktop
+productName: AIPeople
+copyright: MIT License © clb (lamthebest@foxmail.com)
+
+directories:
+  output: release
+  buildResources: resources
+
+# 运行时需要的文件（相对本包根）
+files:
+  - dist-renderer/**
+  - electron/**
+  - resources/icon.png
+  - resources/tray.png
+  - package.json
+
+asar: true
+
+win:
+  icon: resources/icon.png
+  target:
+    - target: nsis
+      arch:
+        - x64
+  # 无证书的本地打包：不签名，仅警告
+  signAndEditExecutable: false
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: AI People 运营工作台
+  installerLanguages:
+    - zh_CN

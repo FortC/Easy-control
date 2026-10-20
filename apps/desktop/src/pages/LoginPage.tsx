@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { Bot } from "lucide-react";
 import { api, setToken, API_BASE } from "../api.js";
 
 export default function LoginPage() {
@@ -33,8 +34,21 @@ export default function LoginPage() {
   return (
     <div className="login-wrap">
       <form className="login-card" onSubmit={submit}>
-        <h1>AI People 运营工作台</h1>
-        <div className="sub">
+        <div className="row" style={{ gap: 12, marginBottom: 14 }}>
+          <span
+            className="brand-mark"
+            style={{ width: 40, height: 40, borderRadius: 10 }}
+          >
+            <Bot size={22} strokeWidth={2} />
+          </span>
+          <div>
+            <h1 style={{ margin: 0 }}>AI People</h1>
+            <div className="sub" style={{ margin: 0 }}>
+              运营工作台
+            </div>
+          </div>
+        </div>
+        <div className="sub" style={{ marginBottom: 16 }}>
           抖音 · 小红书 · 微博｜{mode === "login" ? "登录工作空间" : "创建工作空间"}
         </div>
         {mode === "register" && (

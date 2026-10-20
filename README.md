@@ -91,7 +91,7 @@ scripts/                      seed / smoke / live-check
 | weibo_cli | ⚠️ UNVERIFIED | 命令白名单包装（doctor / commands list / post --ai）；需安装官方 CLI 并实测命令目录 |
 | douyin_api | ⚠️ UNVERIFIED | OAuth + 发布客户端骨架；需开发者应用获批后按当时文档补齐上传字段 |
 
-## 环境变量（.env，参考 .env.example）
+## 环境变量（.env，参考 env.example）
 
 | 变量 | 默认 | 说明 |
 |---|---|---|
@@ -107,5 +107,24 @@ scripts/                      seed / smoke / live-check
 - 真实平台发布未经实测；redbook/weibo/douyin 连接器的字段映射以 PoC 为准
 - 微博多账号 CLI 隔离未验证（方案 §4.4：MVP 每 Runner 单微博会话）
 - 素材文件路径当前按同机开发设计（API 与 Runner 同机）；跨机部署需改签名下载 URL
-- Electron 安装包打包配置未做签名；托盘图标为占位
+- Electron 安装包未做代码签名（首次运行如遇 SmartScreen 提示属正常）
 - 行级安全（RLS）未启用，隔离在仓储层强制；上线前按方案 §11 补数据层约束
+
+## 使用说明（Usage）
+
+- 登录后按「账号中心 → 资料与素材 → 助手与模型 → 内容工作台 → 任务与日历 → 结果与数据」的主线操作；
+- 内容必须基于「资料与素材」中的真实资料生成，审核人需核对事实引用与 AI/商业声明后再批准；
+- 每篇外发内容绑定独立审批（默认 24 小时有效），审批后修改内容会自动失效旧审批；
+- 平台要求验证（验证码/风控）时任务转「需人工处理」并在「异常处理」页给出入口，由真人在平台完成验证；
+- Windows 安装包：`pnpm dist` 产出 `apps/desktop/release/AIPeople Setup *.exe`（NSIS，可选安装目录、创建桌面快捷方式）。
+
+## 许可证（License）
+
+MIT，见 [LICENSE](LICENSE)。界面图标来自 [Lucide](https://lucide.dev)（ISC License），经 Iconify 渲染；
+第三方依赖各自的许可证随其包保留。
+
+## 联系作者
+
+- 发布人：clb
+- 邮箱：<lamthebest@foxmail.com>
+- 问题反馈：优先通过邮箱联系；开源后使用仓库 Issues。
