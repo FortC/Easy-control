@@ -1,0 +1,22 @@
+{
+  "name": "@aipeople/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/main.ts",
+    "start": "tsx src/main.ts"
+  },
+  "dependencies": {
+    "@aipeople/contracts": "workspace:*",
+    "@aipeople/knowledge": "workspace:*",
+    "@aipeople/model-gateway": "workspace:*",
+    "@aipeople/orchestration": "workspace:*",
+    "@aipeople/server-kit": "workspace:*",
+    "@fastify/cors": "^11.0.0",
+    "@fastify/multipart": "^9.0.0",
+    "fastify": "^5.2.0",
+    "jose": "^5.9.0",
+    "zod": "^3.24.0"
+  }
+}
