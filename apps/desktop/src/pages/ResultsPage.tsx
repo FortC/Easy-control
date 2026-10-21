@@ -2,10 +2,13 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api.js";
 import { fmtTime, PUBLICATION_LABELS, PLATFORM_LABELS } from "../format.js";
+import { desktop } from '../native.js';
+import { JobCard } from './CommandPage.js';
 
 /** 结果与数据：发布回执、平台状态、指标与人工登记。 */
 export default function ResultsPage() {
   const queryClient = useQueryClient();
+  const cli = useQuery({queryKey:['native-tools'],queryFn:()=>desktop.tools.snapshot(),refetchInterval:5000});
   const publications = useQuery({
     queryKey: ["publications"],
     queryFn: () => api("GET", "/publications"),
@@ -27,7 +30,10 @@ export default function ResultsPage() {
         </div>
       </div>
 
+      <div className="grid cols-4" style={{marginBottom:20}}>{[['CLI 任务',cli.data?.jobs.length||0],['已完成',cli.data?.jobs.filter(j=>j.status==='completed').length||0],['等待执行',cli.data?.jobs.filter(j=>j.status==='scheduled').length||0],['待核实 / 人工',cli.data?.jobs.filter(j=>['unknown','needs_human'].includes(j.status)).length||0]].map(([label,n])=><div key={label} className="stat"><div className="label">{label}</div><div className="num">{n}</div></div>)}</div>
+      {(cli.data?.jobs.length||0)>0&&<div className="grid cols-2" style={{marginBottom:20}}>{cli.data?.jobs.slice(0,8).map(job=><JobCard key={job.id} job={job} refresh={()=>void cli.refetch()}/>)}</div>}
       <div className="card">
+        <h2>内容发布回执与平台数据</h2>
         <table className="list">
           <thead>
             <tr>

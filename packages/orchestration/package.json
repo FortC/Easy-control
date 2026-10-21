@@ -1,6 +1,6 @@
 {
   "name": "@aipeople/orchestration",
-  "version": "0.1.0",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "exports": {
@@ -9,7 +9,6 @@
   "dependencies": {
     "@aipeople/contracts": "workspace:*",
     "@aipeople/connector-douyin": "workspace:*",
-    "@aipeople/connector-redbook": "workspace:*",
     "@aipeople/connector-simulator": "workspace:*",
     "@aipeople/connector-weibo": "workspace:*",
     "@aipeople/policy": "workspace:*",

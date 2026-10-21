@@ -1,148 +1,52 @@
-# AI People
+# Easy Control
 
-面向抖音、小红书与微博的 AI 运营工作台。Windows 桌面工作台 + 后台任务服务 + 本地执行器。
+Easy Control 是一个可单独安装的 Windows 桌面应用，面向需要管理微博、知乎、抖音和小红书内容运营的个人与小团队。应用内置本地数据库、任务执行和计划，不要求用户部署服务器、Docker 或单独安装 Node.js。
 
-当前状态：**第一期可运行骨架**。三平台通过「模拟器通道」跑通完整闭环（生成 → 审核 → 排程 → 执行 → 结果回传 → 异常处理）；redbook / 微博 CLI / 抖音官方 API 连接器代码已就绪但未经真实凭据验证（标注 UNVERIFIED）。
+工作方式很直接：添加平台 CLI 或导入本机 CLI，登记账号及其独立会话配置；按需接入 OpenAI 兼容模型，让它从受控动作清单中规划任务；检查指令后立即执行或按本地时间排程。应用记录每次调用的输入、输出、状态与人工处理原因。发布 CLI 成功只表示命令返回成功，不表示平台已经公开展示。
 
-- [操作说明](docs/user-guide.zh-CN.md)：**先看这个**——工作模式（无需手机）、各平台账号连接方法、日常使用流程、常见问题。
-- [当前建设方案](docs/construction-plan.zh-CN.md)：产品形态、平台适配、模型与知识库、授权、定时、执行恢复、结果、部署和实施安排。
-- [前期研究记录](docs/feasibility-and-implementation-plan.zh-CN.md)：保留研究过程与来源，实施选择以当前建设方案为准。
+应用也包含一个基础直播讲解台：选择本地 MP4/WebM，写讲稿，使用 Windows 已安装的离线语音分段朗读。独立输出窗口可以被 OBS 或平台直播伴侣捕获。当前版本不负责平台开播或 RTMP 推流。
 
-平台路线：小红书 redbook 实验适配器（第三方）、微博官方 CLI、抖音官方 API。平台拦截时暂停并转人工，不做绕过。
+## 安装与使用
 
-## 快速开始（开发环境）
+在 GitHub Releases 下载 `EasyControl-Setup-0.5.0.exe`，运行后安装。第一次打开会初始化本机数据库。界面中按「CLI 接入中心 → 账号中心 → 助手与模型 → 指令中心」完成配置；排程任务要求应用持续运行、电脑联网且未休眠。
 
-前置要求：Node.js ≥ 22.5（含 node:sqlite）、pnpm、Docker Desktop（国内网络拉取镜像可用 `docker pull docker.m.daocloud.io/library/postgres:16-alpine` 后 `docker tag` 成 `postgres:16-alpine`）。
+[Windows 用户指南](docs/user-guide.zh-CN.md) 说明安装、连接工具和账号、模型配置、排程和直播操作。
 
-```bash
-pnpm install            # 安装依赖（redbook 的 postinstall 钩子默认拦截，符合方案要求）
-pnpm db:up              # 启动 PostgreSQL（docker compose，端口 5433）
-pnpm db:migrate         # 建表
-pnpm db:seed            # 演示数据：admin@aipeople.dev / admin123456
-pnpm dev                # 同时启动 api(8787) + worker + runner
+## 开发与构建
+
+要求 Windows x64、Node.js 22 或更高版本、pnpm 11 或兼容 pnpm 版本。普通用户无需这些开发依赖。
+
+```powershell
+pnpm install
+pnpm dev                 # 开发时启动桌面软件
+pnpm typecheck
+pnpm test                # 业务规则单元测试
+pnpm release             # 构建 Windows 安装程序并验证打包应用
 ```
 
-再开一个终端启动桌面工作台（开发模式，需先 `pnpm --filter @aipeople/desktop install` 已随根安装完成）：
+安装包输出到 `apps/desktop/release/EasyControl-Setup-0.5.0.exe`。Windows 安装包尚未签名，首次运行时 Windows SmartScreen 可能显示发布者未知。
 
-```bash
-pnpm dev:desktop        # Vite(5173) + Electron
-```
+## 架构
 
-桌面端为**个人版免登录模式**：启动后自动连接本地后台并开通工作空间（内置 Mock 模型与 3 个模拟平台账号）。
-若后台未启动，会显示「无法连接后台服务」页面，按页面指引启动后点「重试连接」。
-注意：`/auth/local` 为无凭据端点，后台只可绑定本机/内网使用，不要直接暴露公网。
+Windows 版本由 Electron 主进程、React/TypeScript 页面、内嵌 Fastify API、本机 PGlite 数据库、CLI 管理器和 Windows 离线语音组成；不启动独立后台服务或容器。账号与任务数据保存在 `%APPDATA%/easy-control/` 对应应用数据目录，敏感 CLI 环境变量及主密钥使用 Windows DPAPI 加密。模型接口只接收用户明确提交的指令和必要内容。
 
-### 第一个发布闭环（约 2 分钟）
+完整边界与数据流见 [架构与安全设计](docs/architecture.zh-CN.md)。
 
-1. **总览** → 「生成配对码」→ 复制命令：如果 `pnpm dev` 已含 runner，先删 `.local/runner` 重新配对，或直接用下面命令在另一台（本机亦可）设备执行：
-   ```bash
-   pnpm dev:runner -- --pair <配对码>
-   ```
-2. **内容工作台** → 输入目标（如「根据产品资料准备一篇种草笔记」）→ 勾选模拟账号 → 生成草稿
-3. 查看引用与 AI 声明 → **送审** → **批准**（审批绑定内容哈希，改内容即失效）
-4. 选择「单次发布」时间（如 1 分钟后）→ **创建排程**
-5. **任务与日历** 观察状态：已排程 → 等待执行设备 → 执行中 → 已提交 → 平台审核中 → **已发布**
-6. **结果与数据** 看回执、链接与模拟指标；**异常处理** 看是否有需人工的事项
+## 平台能力与限制
 
-### 测试
+- **小红书**：首版作为内容助手与真人交付工作区。支持 AI 辅助起草、编辑、内部审核、复制/导出文案和素材说明，再由用户自行登录平台检查并发布。小红书账号登录态、Cookie、CLI 账号、模拟键鼠发布以及自动评论、私信、群聊均不接入；第三方 `@lucasygu/redbook` 仅保留仓库元数据，软件只允许查看帮助，不执行账号读取或写入。
+- **微博**：内置接入微博官方 CLI 的设备码授权及命令发现入口。具体命令可用性与服务费用以微博官方帐号和服务政策为准。
+- **知乎、抖音**：支持 OpenCLI 发现平台命令，或导入本机其他 CLI。没有验证通过的平台工具或账号身份时，不会宣称已连通或发布成功。
+- 目录中的 CLI 包从 npm 安装时禁用生命周期脚本。用户自行导入的程序应仅选择信任的文件。
 
-```bash
-pnpm smoke              # 24 项断言：完整闭环 + 审批失效 + 验证码转人工 + 账号暂停 + 幂等重报
-pnpm test               # 状态机 / 信封 / 发布前检查单测（vitest）
-pnpm release            # 发布流水线（见下），内含打包产物 GUI 实测
-```
+关于第三方 CLI 与平台规则的具体界限，见 [平台接入矩阵](docs/platforms.zh-CN.md)。平台不保证第三方工具长期可用；正式对外发布前需要针对实际账号、权限和客户端版本完成单独验收。
 
-### 打包与持续迭代
+## 风控原则
 
-安装包统一产出在项目目录 `apps/desktop/release/`（不入库）：
+外发动作需用户明确确认、选择已登记 UID 的账号，并在执行前运行同一工具的只读身份检查。身份无法匹配、登录过期、出现验证码或结果不确定时，转人工核验；未知结果不自动重试。默认一次运行一个 CLI，参数不经 Shell 解释，输出限制长度且凭据脱敏。AI 只拟计划和总结，不可直接取得工具执行权限。关于 AI 内容标识、授权和素材版权，由运营者按平台规则检查。
 
-- **一条命令出验证过的安装包**：`pnpm release`
-  自动完成：确保 PostgreSQL → 迁移 → 确保后台在线（复用或启动 api+worker）→ 类型检查 →
-  单测 → 冒烟 → 渲染层构建 → electron-builder 打包（NSIS）→ **对打包产物做 GUI 端到端实测**
-  → 报告产物路径。任一步失败立即终止，全部通过才算可交付。
-- **日常迭代**：改代码 → `pnpm test` 自测 → `pnpm release` 出包。后台在线时整条约 3–5 分钟。
-- **版本迭代**：迭代内容写入 `CHANGELOG.md` 的 `[Unreleased]`，随后用
-  easy-publish-check 的 `bump_version.py --level auto --json` 判定级别并同步两处 package.json
-  （根 + apps/desktop），把 `[Unreleased]` 改为 `[x.y.z] - 日期`，提交后 `pnpm release`。
-- **产物**：`AIPeople Setup <版本>.exe`（NSIS 安装程序）与 `win-unpacked/AIPeople.exe`（免安装版）。
+## 隐私与许可证
 
-另有 `npx tsx scripts/live-check.ts`：在真实进程（api+worker+runner 运行中）创建 75 秒后排程的任务并轮询到 PUBLISHED。
+账号数据保存在本机；添加模型供应商后，发送到供应商的数据受其隐私政策约束。打开软件内「关于与帮助 → 打开数据目录」可备份或检查本地数据。
 
-## 代码结构
-
-```
-apps/desktop/                 Electron + React 工作台（8 页面）
-apps/api/                     Fastify 管理服务（账号/内容/审批/排程/任务/结果/异常）
-apps/worker/                  pg-boss 调度、到期发放、模拟平台审核、抖音内部执行器
-apps/runner/                  本地执行器：配对、心跳、领取、SQLite 收据、COMMIT_INTENT
-packages/contracts/           状态机、任务信封、错误码、适配器接口（纯类型 + zod）
-packages/orchestration/       调度物化、发布前检查、领取、结果入账、对账（api/worker 共用）
-packages/policy/              四层授权与发布前检查（纯函数）
-packages/knowledge/           资料检索与引用
-packages/model-gateway/       Mock + OpenAI 兼容供应商适配、费用计量
-packages/connectors/simulator 模拟器通道（演示与测试）
-packages/connectors/redbook/  小红书第三方适配器（固定 @lucasygu/redbook 0.8.2，UNVERIFIED）
-packages/connectors/weibo/    微博官方 CLI 白名单包装（UNVERIFIED，需实测命令目录）
-packages/connectors/douyin/   抖音官方 API（UNVERIFIED，需应用获批）
-packages/server-kit/          环境变量、连接池、口令/凭据加密
-infra/db/migrations/          PostgreSQL 迁移（纯 SQL）
-scripts/                      seed / smoke / live-check
-```
-
-## 关键机制（对齐建设方案）
-
-- **状态机**：`SCHEDULED → PREFLIGHT → WAITING_RUNNER → RUNNING → SUBMITTED → UNDER_REVIEW → PUBLISHED`，异常分支 `NEEDS_HUMAN / UNKNOWN / FAILED / MISSED / CANCELLED / REJECTED`；非法迁移直接拒绝（单测覆盖）。
-- **审批绑定**：审批记录内容哈希 + 账号 + 动作 + 有效期；审批后修改内容，哈希不一致即拒绝发布（冒烟已验证）。
-- **调度物化**：`schedule_id + occurrence_at + account_id + action` 唯一键防重，停机恢复自动补齐；单次排程接口同步建任务 + outbox 精确投递，Worker 扫描兜底。
-- **提交边界**：Runner 在不可逆提交前落盘 `COMMIT_INTENT`；适配器异常退出按 UNKNOWN 处理，绝不自动重发；退出码 0 但无回执 ID 也标记未确认。
-- **幂等**：结果按 `task+attempt` 去重（断网重报安全）；事件按 dedupe_key 去重。
-- **账号熔断**：验证码 / 会话失效 → 任务 NEEDS_HUMAN + 账号暂停外发 + 异常登记（冒烟已验证）。
-- **凭据**：小红书 Cookie 加密存服务端（回退路径），Runner 优先读本地 `vault/{accountId}.json`；密钥不进日志 / 任务 JSON / 模型上下文。
-- **工作空间隔离**：所有查询带 workspace_id；Runner 设备令牌哈希存储、可撤销。
-
-## 平台通道状态
-
-| 通道 | 状态 | 说明 |
-|---|---|---|
-| simulator | ✅ 可用 | 演示闭环，不连真实平台 |
-| redbook | ⚠️ UNVERIFIED | 代码就绪（进程内 XhsClient：上传→建笔记→note_id 回读，错误码映射齐全）；需真实会话验证。无平台级 AIGC 声明参数 → strict 策略下转人工 |
-| weibo_cli | ⚠️ UNVERIFIED | 命令白名单包装（doctor / commands list / post --ai）；需安装官方 CLI 并实测命令目录 |
-| douyin_api | ⚠️ UNVERIFIED | OAuth + 发布客户端骨架；需开发者应用获批后按当时文档补齐上传字段 |
-
-## 环境变量（.env，参考 env.example）
-
-| 变量 | 默认 | 说明 |
-|---|---|---|
-| DATABASE_URL | postgres://aipeople:aipeople_dev@localhost:5433/aipeople | PostgreSQL 连接串 |
-| API_PORT | 8787 | 后台 API 端口 |
-| JWT_SECRET | dev-secret-change-me | 登录令牌签名（生产必须换强随机值） |
-| RUNNER_BACKEND_URL | http://localhost:8787 | Runner 连接的后台地址 |
-| DATA_DIR | .local | 本地数据（素材、Runner 库） |
-| DOUYIN_CLIENT_KEY/SECRET | — | 抖音应用凭据（获批后配置） |
-
-## 已知边界（第一期骨架）
-
-- 真实平台发布未经实测；redbook/weibo/douyin 连接器的字段映射以 PoC 为准
-- 微博多账号 CLI 隔离未验证（方案 §4.4：MVP 每 Runner 单微博会话）
-- 素材文件路径当前按同机开发设计（API 与 Runner 同机）；跨机部署需改签名下载 URL
-- Electron 安装包未做代码签名（首次运行如遇 SmartScreen 提示属正常）
-- 行级安全（RLS）未启用，隔离在仓储层强制；上线前按方案 §11 补数据层约束
-
-## 使用说明（Usage）
-
-- 登录后按「账号中心 → 资料与素材 → 助手与模型 → 内容工作台 → 任务与日历 → 结果与数据」的主线操作；
-- 内容必须基于「资料与素材」中的真实资料生成，审核人需核对事实引用与 AI/商业声明后再批准；
-- 每篇外发内容绑定独立审批（默认 24 小时有效），审批后修改内容会自动失效旧审批；
-- 平台要求验证（验证码/风控）时任务转「需人工处理」并在「异常处理」页给出入口，由真人在平台完成验证；
-- Windows 安装包：`pnpm dist` 产出 `apps/desktop/release/AIPeople Setup *.exe`（NSIS，可选安装目录、创建桌面快捷方式）。
-
-## 许可证（License）
-
-MIT，见 [LICENSE](LICENSE)。界面图标来自 [Lucide](https://lucide.dev)（ISC License），经 Iconify 渲染；
-第三方依赖各自的许可证随其包保留。
-
-## 联系作者
-
-- 发布人：clb
-- 邮箱：<lamthebest@foxmail.com>
-- 问题反馈：优先通过邮箱联系；开源后使用仓库 Issues。
+本项目以 Apache-2.0 发布，并保留原 MIT 授权代码的授权说明；图标依据 ISC License。详见 [LICENSE](LICENSE) 与 [NOTICE](NOTICE)。发布联系人：clb（lamthebest@foxmail.com）。

@@ -21,3 +21,11 @@ cookies-*.json
 .local/
 data/
 apps/desktop/dist-renderer/
+
+.easy-publish.json
+apps/desktop/electron/backend.cjs
+apps/desktop/resources/migrations/
+apps/desktop/resources/pg-runtime/
+apps/desktop/resources/tool-runtime/
+apps/desktop/resources/pglite/
+

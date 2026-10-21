@@ -3,8 +3,9 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { api } from "../api.js";
 import { PLATFORM_LABELS, CHANNEL_LABELS } from "../format.js";
+import CliAccounts from '../components/CliAccounts.js';
 
-const PLATFORMS = ["xiaohongshu", "weibo", "douyin"] as const;
+const PLATFORMS = ["xiaohongshu", "weibo", "douyin", "zhihu"] as const;
 
 export default function AccountsPage() {
   const queryClient = useQueryClient();
@@ -27,14 +28,16 @@ export default function AccountsPage() {
       <div className="page-head">
         <div>
           <h1>账号中心</h1>
-          <div className="sub">连接微博、抖音、小红书账号；同一平台可连接演示模拟器或真实通道</div>
+          <div className="sub">管理平台 CLI 账号和授权；小红书只保留内容助手与人工交付工作区。</div>
         </div>
         <button className="btn primary" onClick={() => setShowAdd(true)}>
           <Plus size={13} style={{ verticalAlign: -2 }} /> 连接账号
         </button>
       </div>
 
+      <CliAccounts />
       <div className="card">
+        <h2>内容工作区与平台连接</h2>
         <table className="list">
           <thead>
             <tr>
@@ -60,7 +63,7 @@ export default function AccountsPage() {
                 </td>
                 <td>
                   <span className={`chip ${account.channel === "simulator" ? "info" : "muted"}`}>
-                    {CHANNEL_LABELS[account.channel]}
+                    {account.platform === "xiaohongshu" ? "人工交付工作区" : CHANNEL_LABELS[account.channel]}
                   </span>
                 </td>
                 <td className="mono">{account.uid}</td>
@@ -115,8 +118,7 @@ function AddAccountModal({ onClose, onDone }: { onClose: () => void; onDone: () 
   const [platform, setPlatform] = useState<string>("xiaohongshu");
   const [channel, setChannel] = useState<string>("simulator");
   const [displayName, setDisplayName] = useState("");
-  const [a1, setA1] = useState("");
-  const [webSession, setWebSession] = useState("");
+  const [uid,setUid] = useState('');
   const [error, setError] = useState<string | null>(null);
   const create = useMutation({
     mutationFn: (body: unknown) => api("POST", "/accounts", body),
@@ -126,10 +128,10 @@ function AddAccountModal({ onClose, onDone }: { onClose: () => void; onDone: () 
 
   const channels =
     platform === "xiaohongshu"
-      ? ["simulator", "redbook"]
+      ? ["simulator"]
       : platform === "weibo"
         ? ["simulator", "weibo_cli"]
-        : ["simulator", "douyin_api"];
+        : platform === 'zhihu' ? ['simulator'] : ["simulator", "douyin_api"];
 
   return (
     <div className="modal-mask" onClick={onClose}>
@@ -163,33 +165,17 @@ function AddAccountModal({ onClose, onDone }: { onClose: () => void; onDone: () 
           </select>
           <span className="hint">
             {channel === "simulator"
-              ? "演示通道：不连接真实平台，用于体验完整流程"
-              : channel === "redbook"
-                ? "第三方实验适配器：需要账号所有者提供的有效会话（a1 与 web_session）"
-                : channel === "weibo_cli"
-                  ? "微博官方 CLI：需在执行设备安装 weibo-cli 并完成 OAuth"
-                  : "抖音官方 API：需开发者应用获批并完成账号 OAuth"}
+              ? platform === "xiaohongshu" ? "用于内容生成与审核归档；不保存小红书登录态，发布与互动由真人完成" : "演示通道：不连接真实平台，用于体验流程"
+              : channel === "weibo_cli"
+                ? "微博官方 CLI：需在执行设备安装 weibo-cli 并完成 OAuth"
+                : "抖音官方 API：需开发者应用获批并完成账号 OAuth"}
           </span>
         </div>
         <div className="field">
           <label>显示名称</label>
           <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="例如：山野茶事小红书号" />
         </div>
-        {channel === "redbook" && (
-          <>
-            <div className="notice">
-              会话凭据仅用于本工作空间发布，加密保存；平台要求验证时任务会暂停并转人工处理。
-            </div>
-            <div className="field">
-              <label>a1</label>
-              <input value={a1} onChange={(e) => setA1(e.target.value)} placeholder="浏览器 Cookie 中的 a1 值" />
-            </div>
-            <div className="field">
-              <label>web_session</label>
-              <input value={webSession} onChange={(e) => setWebSession(e.target.value)} placeholder="浏览器 Cookie 中的 web_session 值" />
-            </div>
-          </>
-        )}
+        {channel !== 'simulator' && <div className="field"><label>账号 UID</label><input value={uid} onChange={e=>setUid(e.target.value)} placeholder="填写需要绑定的真实平台账号 UID"/></div>}
         {error && <div className="error-text" style={{ marginBottom: 10 }}>{error}</div>}
         <div className="row" style={{ justifyContent: "flex-end" }}>
           <button className="btn" onClick={onClose}>
@@ -203,11 +189,11 @@ function AddAccountModal({ onClose, onDone }: { onClose: () => void; onDone: () 
                 platform,
                 channel,
                 displayName: displayName || `${PLATFORM_LABELS[platform]}账号`,
-                ...(channel === "redbook" ? { secret: { a1, web_session } } : {}),
+                ...(uid ? {uid} : {}),
               })
             }
           >
-            {create.isPending ? "连接中…" : "连接"}
+            {create.isPending ? "保存中…" : platform === "xiaohongshu" ? "创建人工交付工作区" : "连接"}
           </button>
         </div>
       </div>

@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "../api.js";
 import { fmtTime, STATE_LABELS, PLATFORM_LABELS, CHANNEL_LABELS } from "../format.js";
+import {desktop} from '../native.js';
+import {JobCard} from './CommandPage.js';
 
 function stateChipClass(status: string): string {
   if (status === "PUBLISHED") return "ok";
@@ -12,6 +14,7 @@ function stateChipClass(status: string): string {
 }
 
 export default function TasksPage() {
+  const native=useQuery({queryKey:['native-tools'],queryFn:()=>desktop.tools.snapshot(),refetchInterval:4000});
   const [filter, setFilter] = useState("");
   const [activeId, setActiveId] = useState<string | null>(null);
   const tasks = useQuery({
@@ -30,6 +33,7 @@ export default function TasksPage() {
         </div>
       </div>
 
+      {(native.data?.jobs.filter(j=>['scheduled','running','missed'].includes(j.status)).length||0)>0&&<div><h2 className="section-heading" style={{marginBottom:16}}>CLI 本地排程</h2><div className="grid cols-2">{native.data?.jobs.filter(j=>['scheduled','running','missed'].includes(j.status)).map(j=><JobCard key={j.id} job={j} refresh={()=>void native.refetch()}/>)}</div></div>}
       <div className="card">
         <h2>周期计划（{schedules.data?.schedules?.length ?? 0}）</h2>
         <table className="list">

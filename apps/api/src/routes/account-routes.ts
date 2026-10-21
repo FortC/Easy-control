@@ -14,11 +14,11 @@ import { recordEvent } from "@aipeople/orchestration";
 import { channelCapabilities } from "@aipeople/orchestration";
 
 const CreateAccountSchema = z.object({
-  platform: z.string().refine(isPlatform, "平台必须是 xiaohongshu/weibo/douyin"),
-  channel: z.enum(["simulator", "redbook", "weibo_cli", "douyin_api"]).optional(),
+  platform: z.string().refine(isPlatform, "平台必须是 xiaohongshu/weibo/douyin/zhihu"),
+  channel: z.enum(["simulator", "weibo_cli", "douyin_api"]).optional(),
   uid: z.string().min(1).optional(),
   displayName: z.string().min(1).optional(),
-  /** 凭据（小红书 Cookie 的 a1/web_session 等）；simulator 通道不需要。 */
+  /** 仅用于已启用的官方平台通道；小红书第一版不接受平台凭据。 */
   secret: z.record(z.string()).optional(),
 });
 
@@ -41,8 +41,6 @@ function riskNoteFor(channel: Channel): string | null {
   switch (channel) {
     case "simulator":
       return "演示通道，不连接真实平台";
-    case "redbook":
-      return "第三方实验适配器：非官方接口，存在会话失效/验证码/平台治理风险，拦截时暂停转人工";
     case "weibo_cli":
       return "微博官方 CLI：需本机安装并完成 OAuth，发布 AI 内容需声明 AI 属性";
     case "douyin_api":
@@ -76,8 +74,8 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
     if (!CHANNEL_PLATFORMS[channel].includes(platform)) {
       return reply.code(400).send({ error: "bad_request", message: `通道 ${channel} 不支持平台 ${platform}` });
     }
-    if (channel === "redbook" && (!body.data.secret?.["a1"] || !body.data.secret?.["web_session"])) {
-      return reply.code(400).send({ error: "bad_request", message: "小红书会话连接需要提供 a1 与 web_session" });
+    if (platform === "xiaohongshu" && (channel !== "simulator" || body.data.secret)) {
+      return reply.code(400).send({ error: "human_delivery_only", message: "第一版小红书不保存账号会话或凭据，请在软件外由真人登录并交付已审核内容。" });
     }
     const uid = body.data.uid ?? (channel === "simulator" ? randomId("sim") : "");
     if (!uid) {
@@ -100,7 +98,7 @@ export async function accountRoutes(app: FastifyInstance): Promise<void> {
           channel === "simulator" ? null : `vault:${accountId}`,
           body.data.secret ? encryptSecret(JSON.stringify(body.data.secret)) : null,
           JSON.stringify(channel === "simulator" ? [publishAction, "pull_metrics"] : [publishAction]),
-          riskNoteFor(channel),
+          platform === "xiaohongshu" ? "人工交付工作区：不连接平台，不保存账号会话或凭据" : riskNoteFor(channel),
         ],
       );
       await client.query(

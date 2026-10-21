@@ -1,21 +1,36 @@
-# electron-builder 打包配置（Windows 首发）
+# electron-builder 打包配置（Windows 独立应用：内嵌数据库与后台，打开即用）
 appId: dev.aipeople.desktop
-productName: AIPeople
-copyright: MIT License © clb (lamthebest@foxmail.com)
+productName: EasyControl
+executableName: EasyControl
+artifactName: EasyControl-Setup-${version}.${ext}
+copyright: Copyright 2026 clb (lamthebest@foxmail.com)
 
 directories:
   output: release
   buildResources: resources
 
-# 运行时需要的文件（相对本包根）
+# 运行时需要的文件（相对本包根，进 asar）
 files:
   - dist-renderer/**
   - electron/**
   - resources/icon.png
   - resources/tray.png
+  - resources/LICENSE.txt
+  - resources/NOTICE.txt
+  - resources/icons-license.txt
+  - resources/migrations/**
   - package.json
 
+# 嵌入式 PGlite WASM 及自带 npm 客户端放入 asar 外资源目录。
+extraResources:
+  - from: resources/pglite
+    to: pglite
+  - from: resources/tool-runtime
+    to: tool-runtime
+
 asar: true
+asarUnpack:
+  - electron/speech.ps1
 
 win:
   icon: resources/icon.png
@@ -31,6 +46,11 @@ nsis:
   allowToChangeInstallationDirectory: true
   createDesktopShortcut: true
   createStartMenuShortcut: true
-  shortcutName: AI People 运营工作台
+  shortcutName: Easy Control
+  perMachine: false
+  runAfterFinish: false
   installerLanguages:
     - zh_CN
+
+
+

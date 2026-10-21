@@ -1,0 +1,37 @@
+import { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowUpRight, Clock3, Play, Sparkles, Terminal, Download, CheckCircle2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { api } from '../api.js';
+import { desktop, JOB_LABELS, PLATFORM_NAMES, type CliJob } from '../native.js';
+import { fmtTime, fromLocalInput } from '../format.js';
+
+export default function CommandPage(){
+  const qc=useQueryClient(), q=useQuery({queryKey:['native-tools'],queryFn:()=>desktop.tools.snapshot(),refetchInterval:2500});
+  const [toolId,setToolId]=useState(''),[actionId,setActionId]=useState('help'),[accountId,setAccountId]=useState(''),[prompt,setPrompt]=useState(''),[values,setValues]=useState<Record<string,string>>({}),[at,setAt]=useState(''),[confirmed,setConfirmed]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(''),[plan,setPlan]=useState('');
+  const tool=q.data?.tools.find(t=>t.id===toolId)||q.data?.tools.find(t=>t.installed)||q.data?.tools[0];
+  const action=tool?.actions.find(a=>a.id===actionId)||tool?.actions[0];
+  const keys=[...new Set(action?.args.flatMap(a=>[...a.matchAll(/\{(\w+)\}/g)].map(m=>m[1]!))||[])];
+  const accounts=(q.data?.accounts||[]).filter(a=>a.toolId===tool?.id&&!a.paused);
+  async function makePlan(){if(!tool)return;setBusy(true);setError('');try{const p=await api<any>('POST','/assistant/plan',{prompt,actions:tool.actions});setPlan(p.summary);if(p.actionId){setActionId(p.actionId);setValues(p.values);setConfirmed(false);}}catch(e){setError(String(e));}finally{setBusy(false);}}
+  async function run(){if(!tool||!action)return;setBusy(true);setError('');try{const s=await desktop.tools.enqueue({toolId:tool.id,actionId:action.id,accountId:accountId||undefined,values,confirmed,prompt,scheduledAt:at?fromLocalInput(at):undefined});qc.setQueryData(['native-tools'],s);setPlan(at?'已加入本地排程。请保持软件在托盘运行，电脑联网且不休眠。':'已加入执行队列，结果将在右侧返回。');setConfirmed(false);}catch(e){setError(String(e));}finally{setBusy(false);}}
+  return <div className="page-enter"><div className="page-head"><div><div className="eyebrow">COMMAND CENTER</div><h1>指令中心</h1><div className="sub">用自然语言规划操作，确认后交给本机工具执行。</div></div><Link to="/cli" className="btn"><Terminal size={15}/>管理 CLI</Link></div>
+    <div className="command-layout"><section className="card command-composer"><div className="section-title"><span className="feature-symbol small"><Sparkles size={18}/></span><div><h2>今天，要完成什么？</h2><p>模型负责规划，工具负责执行。</p></div></div>
+      <textarea className="prompt-box" rows={4} value={prompt} onChange={e=>setPrompt(e.target.value)} placeholder="例如：搜索小红书上关于露营装备的笔记，帮我整理选题思路"/>
+      <div className="grid cols-2"><div className="field"><label>执行工具</label><select value={tool?.id||''} onChange={e=>{setToolId(e.target.value);setActionId('help');setAccountId('');setValues({});setConfirmed(false);}}>{q.data?.tools.map(t=><option key={t.id} value={t.id}>{t.name}{t.installed?'':' · 未安装'}</option>)}</select></div><div className="field"><label>使用账号</label><select value={accountId} onChange={e=>{setAccountId(e.target.value);setConfirmed(false);}}><option value="">工具当前默认会话</option>{accounts.map(a=><option key={a.id} value={a.id}>{PLATFORM_NAMES[a.platform]} · {a.name}</option>)}</select></div></div>
+      <button className="btn secondary" disabled={!prompt.trim()||busy||!tool} onClick={()=>void makePlan()}><Sparkles size={15}/>{busy?'正在处理…':'让模型生成操作计划'}</button>
+      <div className="composer-divider"/><div className="field"><label>执行动作 · 也可直接手动选择</label><select value={action?.id||''} onChange={e=>{setActionId(e.target.value);setValues({});setConfirmed(false);}}>{tool?.actions.map(a=><option key={a.id} value={a.id}>{a.label}{a.kind==='write'?' · 外发操作':''}</option>)}</select></div>
+      {keys.map(key=><div className="field" key={key}><label>{{query:'搜索词',url:'内容链接',text:'正文内容',title:'标题',image:'图片文件'}[key]||key}</label>{key==='text'?<textarea rows={5} value={values[key]||''} onChange={e=>{setValues({...values,[key]:e.target.value});setConfirmed(false);}}/>:<div className="row"><input style={{flex:1}} value={values[key]||''} onChange={e=>{setValues({...values,[key]:e.target.value});setConfirmed(false);}}/>{key==='image'&&<button className="btn" onClick={async()=>{const p=await desktop.tools.chooseImage();if(p)setValues({...values,[key]:p});}}>选择图片</button>}</div>}</div>)}
+      <div className="field"><label><Clock3 size={13}/> 执行时间</label><input type="datetime-local" value={at} onChange={e=>setAt(e.target.value)}/><span className="hint">留空立即执行；排程按北京时间。关机不执行，错过 30 分钟不补发。</span></div>
+      {action?.kind==='write'&&<label className="write-confirm"><input type="checkbox" checked={confirmed} onChange={e=>setConfirmed(e.target.checked)}/>我已核对具体账号、内容、版权及所需 AI / 商业声明，确认本次外发。</label>}
+      {plan&&<div className="plan-note"><CheckCircle2 size={16}/><span>{plan}</span></div>}{error&&<div className="notice error-text" role="alert">{error}</div>}
+      <button className="btn primary full" disabled={busy||!tool?.installed||keys.some(k=>!values[k]?.trim())||(action?.kind==='write'&&!confirmed)} onClick={()=>void run()}><Play size={15}/>{at?'确认并加入排程':'确认并执行'}</button>
+      {!tool?.installed&&<p className="hint">先到 CLI 接入中心安装工具，再执行动作。</p>}
+    </section><section><div className="toolbar"><h2 className="section-heading">操作记录 <span>{q.data?.jobs.length||0}</span></h2><button className="btn small" onClick={()=>void desktop.tools.export()}><Download size={13}/>导出</button></div>{q.data?.jobs.length?q.data.jobs.slice(0,35).map(j=><JobCard key={j.id} job={j} refresh={()=>void q.refetch()}/>):<div className="card empty-state"><Terminal size={32}/><h3>从第一条指令开始</h3><p>运行帮助、发现命令或提交运营任务。<br/>执行结果、排程与模型总结会保存在这里。</p></div>}</section></div>
+  </div>;
+}
+export function JobCard({job,refresh}:{job:CliJob;refresh:()=>void}){
+  const [open,setOpen]=useState(false),[summary,setSummary]=useState(''),[busy,setBusy]=useState(false);
+  async function summarize(){setBusy(true);try{const result=await api<any>('POST','/assistant/plan',{prompt:JSON.stringify({action:job.actionLabel,status:job.status,output:job.stdout.slice(0,6000),error:job.stderr.slice(0,1000)}),actions:[{id:'summary',label:'总结',args:[],kind:'read'}],summarize:true});setSummary(result.summary);}catch(e){setSummary(String(e));}finally{setBusy(false);}}
+  return <article className="job-card"><div className="row" style={{justifyContent:'space-between'}}><span className="job-platform">{PLATFORM_NAMES[job.platform]} / {job.accountName}</span><span className={`chip ${job.status==='completed'?'ok':['failed','unknown','needs_human'].includes(job.status)?'warn':'info'}`}>{JOB_LABELS[job.status]||job.status}</span></div><h3>{job.actionLabel}</h3><p>{job.summary}</p><div className="job-meta"><span>{fmtTime(job.scheduledAt)}</span><button className="text-btn" onClick={()=>setOpen(!open)}>{open?'收起结果':'查看结果'}<ArrowUpRight size={12}/></button>{job.status==='scheduled'&&<button className="text-btn" onClick={async()=>{await desktop.tools.cancel(job.id);refresh();}}>取消排程</button>}</div>{open&&<div className="job-detail"><pre className="code">{job.stdout||job.stderr||'等待执行结果'}</pre>{job.stderr&&job.stdout&&<pre className="code error-text">{job.stderr}</pre>}<button className="btn small" disabled={busy||!(job.stdout||job.stderr)} onClick={()=>void summarize()}><Sparkles size={13}/>{busy?'总结中…':'用模型总结结果'}</button>{summary&&<div className="content-body" style={{marginTop:10}}>{summary}</div>}</div>}</article>;
+}

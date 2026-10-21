@@ -14,7 +14,7 @@ const outDir = resolve(root, "apps/desktop/resources");
 const publicDir = resolve(root, "apps/desktop/public");
 
 function render(svgFile: string, outFile: string, size: number): void {
-  const svg = readFileSync(resolve(srcDir, svgFile), "utf8");
+  const svg = readFileSync(resolve(srcDir, svgFile), "utf8").replaceAll('currentColor', outFile === 'tray.png' ? '#ffffff' : '#3567e9');
   const resvg = new Resvg(svg, {
     fitTo: { mode: "width", value: size },
     background: "rgba(0,0,0,0)",
@@ -29,9 +29,9 @@ function render(svgFile: string, outFile: string, size: number): void {
 mkdirSync(outDir, { recursive: true });
 mkdirSync(publicDir, { recursive: true });
 
-console.log("渲染图标（Lucide bot，ISC License）:");
-render("bot-brand.svg", "icon.png", 256); // electron-builder 自动转 ico
-render("bot-brand.svg", "icon-512.png", 512); // 安装程序/商店展示
-render("bot-white.svg", "tray.png", 64); // 托盘（运行时 resize 16/32）
-render("bot-brand.svg", "../public/icon.png", 64); // 渲染层 favicon
+console.log("渲染现成图标（Lucide panels-top-left，ISC License）:");
+render("panels-top-left.svg", "icon.png", 256);
+render("panels-top-left.svg", "icon-512.png", 512);
+render("panels-top-left.svg", "tray.png", 64);
+render("panels-top-left.svg", "../public/icon.png", 64);
 console.log("完成。");

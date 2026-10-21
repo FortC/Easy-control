@@ -76,7 +76,7 @@ async function main() {
     }
 
     const simulatorAccounts = [
-      { platform: "xiaohongshu", uid: "sim_xhs_001", name: "模拟小红书账号", action: "publish_image_note" },
+      { platform: "xiaohongshu", uid: "sim_xhs_001", name: "小红书人工交付工作区", action: "publish_image_note" },
       { platform: "weibo", uid: "sim_wb_001", name: "模拟微博账号", action: "publish_post" },
       { platform: "douyin", uid: "sim_dy_001", name: "模拟抖音账号", action: "publish_video" },
     ];

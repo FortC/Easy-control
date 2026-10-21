@@ -9,7 +9,7 @@ export const ADAPTER_ERROR_CODES = [
   "rate_limited", // 平台限流
   "ip_blocked", // IP 被封锁
   "sign_failed", // 请求签名失败（上游接口变化）
-  "missing_declaration", // 平台声明能力无法满足（如 redbook 无 AIGC 声明参数）
+  "missing_declaration", // 平台声明能力无法满足
   "not_configured", // 通道未配置（CLI 未安装、应用凭据缺失等）
   "account_mismatch", // 连接的账号 UID 与任务账号不符
   "platform_error", // 平台返回的其他业务错误

@@ -47,7 +47,7 @@ export class MockProvider implements ModelProviderAdapter {
       const hooks = [
         "最近把这件事彻底整理了一遍",
         "被问了很多次，这次一次性说清楚",
-        "亲测有用的都帮你们记下来了",
+        "根据现有资料，把关键内容整理在这里",
       ];
       parts.push(
         [
@@ -73,6 +73,8 @@ export class MockProvider implements ModelProviderAdapter {
           `${AI_DECLARATION}`,
         ].join("\n"),
       );
+    } else if (platform === 'zhihu') {
+      parts.push([`${mainKeyword}：基于现有资料的分析`, '', ...sourcePoints, '', '以上为资料整理示例，请补充可验证的论据后审核发布。', '', AI_DECLARATION].join('\n'));
     } else {
       parts.push(
         [
@@ -92,6 +94,7 @@ export class MockProvider implements ModelProviderAdapter {
       xiaohongshu: [mainKeyword, "干货整理", "真实体验"],
       weibo: [mainKeyword, "资料整理"],
       douyin: [mainKeyword, "干货分享"],
+      zhihu: [mainKeyword,'资料分析'],
     };
 
     const draft: GeneratedDraft = {

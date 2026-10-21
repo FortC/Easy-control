@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Sparkles, ArrowRight } from "lucide-react";
 import { api } from "../api.js";
 import { PLATFORM_LABELS, CONTENT_STATUS_LABELS, fmtTime, fromLocalInput, toLocalInput } from "../format.js";
+import { desktop } from "../native.js";
 
 /** 内容工作台：生成 → 编辑 → 送审 → 审批 → 排程（第一个业务里程碑的界面闭环）。 */
 export default function StudioPage() {
@@ -295,7 +296,7 @@ function ContentDetail({ contentId, accounts }: { contentId: string; accounts: a
             <div key={index} className="notice" style={{ marginTop: 10 }}>{warning}</div>
           ))}
 
-          <h2 style={{ marginTop: 16 }}>审核与排程</h2>
+          <h2 style={{ marginTop: 16 }}>{content.platform === "xiaohongshu" ? "内容审核与真人交付" : "审核与排程"}</h2>
           {content.status === "draft" && (
             <button className="btn primary" onClick={() => submitReview.mutate()} disabled={submitReview.isPending}>
               送审 <ArrowRight size={12} style={{ verticalAlign: -2 }} />
@@ -304,13 +305,13 @@ function ContentDetail({ contentId, accounts }: { contentId: string; accounts: a
           {content.status === "ready_for_review" && platformAccount && (
             <div>
               <div className="field">
-                <label>审批发布到</label>
+                <label>{content.platform === "xiaohongshu" ? "审核归档到" : "审批目标账号"}</label>
                 <div className="muted">
                   {PLATFORM_LABELS[content.platform]} · {platformAccount.display_name}
                 </div>
               </div>
               <button className="btn primary" onClick={() => approve.mutate()} disabled={approve.isPending}>
-                {approve.isPending ? "审批中…" : "批准（有效期 24 小时）"}
+                {approve.isPending ? "审批中…" : content.platform === "xiaohongshu" ? "审核通过并归档" : "批准（有效期 24 小时）"}
               </button>
             </div>
           )}
@@ -318,7 +319,16 @@ function ContentDetail({ contentId, accounts }: { contentId: string; accounts: a
             <div className="error-text">没有可用的{PLATFORM_LABELS[content.platform]}账号，先到账号中心连接</div>
           )}
           {content.status === "approved" && activeApproval && (
-            <>
+            content.platform === "xiaohongshu" ? (
+              <div className="human-delivery-panel">
+                <div className="notice">已通过内部内容审核。小红书由真人登录并交付；本软件不读取登录态、不代替用户发布或执行互动。</div>
+                <div className="row">
+                  <button className="btn primary" onClick={async () => { try { await desktop.copyText([content.title, content.body, ...(content.topics ?? []).map((topic: string) => `#${topic}`)].join("\n\n")); setMessage("标题、正文与话题已复制。请在平台内人工检查并完成交付。"); } catch (e) { setError(String(e)); } }}>复制标题、正文和话题</button>
+                  <button className="btn" onClick={() => void desktop.openExternal("https://www.xiaohongshu.com")}>打开小红书，手动交付</button>
+                </div>
+                <p className="hint">AI 参与声明：{content.declarations?.aiGenerated ? "已标记" : "未标记"}；商业合作声明：{content.declarations?.commercial ? "已标记" : "未标记"}。请按平台当前规则核验正文、素材和相应标识。</p>
+              </div>
+            ) : <>
               <div className="notice">
                 已批准（{account?.display_name}），有效期至 {fmtTime(activeApproval.expires_at)}；审批后修改内容会使审批失效。
               </div>

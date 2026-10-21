@@ -136,7 +136,7 @@ export function preflightCheck(input: PreflightInput): PolicyDecision {
   return { allowed: true };
 }
 
-/** redbook 通道当前无平台级 AIGC 声明参数（方案 §3 验收项）。 */
+/** 检查平台通道是否支持声明 AI 生成属性。 */
 export function checkAigcDeclaration(input: PreflightInput): PolicyDecision {
   const { workspace, contentVersion, task } = input;
   if (workspace.aigcPolicy === "off") return { allowed: true };

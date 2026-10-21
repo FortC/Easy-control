@@ -3,12 +3,12 @@ packages:
   - packages/*
   - packages/connectors/*
 
-# 构建脚本白名单：esbuild/electron 需要；@lucasygu/redbook 的 postinstall
-# （注册外部技能钩子）按方案 §3 要求显式禁止执行。
+# Only esbuild and Electron need install-time native build scripts.
 onlyBuiltDependencies:
   - esbuild
   - electron
 allowBuilds:
-  '@lucasygu/redbook': false
   esbuild: true
   electron: true
+minimumReleaseAgeExclude:
+  - '@electric-sql/pglite@0.5.11'

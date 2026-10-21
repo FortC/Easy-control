@@ -69,7 +69,7 @@ export async function runnerRoutes(app: FastifyInstance): Promise<void> {
       .object({
         code: z.string().min(1),
         name: z.string().min(1).default("Windows 执行设备"),
-        adapters: z.array(z.string()).default(["simulator", "redbook", "weibo_cli"]),
+        adapters: z.array(z.enum(["simulator", "weibo_cli", "douyin_api"])).default(["simulator", "weibo_cli"]),
       })
       .safeParse(request.body);
     if (!body.success) return reply.code(400).send({ error: "bad_request", message: body.error.issues[0]?.message });

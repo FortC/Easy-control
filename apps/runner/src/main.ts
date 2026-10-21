@@ -23,7 +23,7 @@ async function pair(backendUrl: string, code: string, name: string, store: Runne
   const response = await fetch(`${backendUrl}/runners/pair`, {
     method: "POST",
     headers: { "content-type": "application/json" },
-    body: JSON.stringify({ code, name, adapters: ["simulator", "redbook", "weibo_cli"] }),
+    body: JSON.stringify({ code, name, adapters: ["simulator", "weibo_cli"] }),
   });
   if (!response.ok) {
     const body = (await response.json().catch(() => ({}))) as { message?: string };

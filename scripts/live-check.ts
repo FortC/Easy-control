@@ -1,6 +1,3 @@
-import { resolve, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
-const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const BASE = "http://localhost:8787";
 let token = "";
 async function call(method: string, path: string, body?: unknown) {
@@ -28,24 +25,16 @@ const cv = prepare.versions[0].id;
 await call("POST", `/contents/${cv}/ready-for-review`);
 const approve = await call("POST", `/content-versions/${cv}/approve`, { accountId: xhs.id, action: "publish_image_note", validMinutes: 120 });
 const at = new Date(Date.now() + 75_000).toISOString();
-const schedule = await call("POST", "/schedules", {
+const schedule = await fetch(`${BASE}/schedules`, {
+  method: "POST",
+  headers: { "content-type": "application/json", authorization: `Bearer ${token}` },
+  body: JSON.stringify({
   mode: "single", contentVersionId: cv, approvalId: approve.approvalId, accountId: xhs.id,
   platform: "xiaohongshu", action: "publish_image_note", at,
+  }),
 });
-console.log(`任务 ${schedule.taskId} 将于 ${at} 执行`);
-const deadline = Date.now() + 4 * 60_000;
-let last = "";
-while (Date.now() < deadline) {
-  await new Promise((r) => setTimeout(r, 4000));
-  const task = await call("GET", `/tasks/${schedule.taskId}`);
-  if (task.task.status !== last) {
-    last = task.task.status;
-    console.log(`  状态: ${last}  公开: ${task.publication?.publication_status ?? "—"}  ${new Date().toLocaleTimeString("zh-CN")}`);
-  }
-  if (["PUBLISHED", "FAILED", "NEEDS_HUMAN", "MISSED", "CANCELLED", "UNKNOWN"].includes(last)) {
-    console.log(`最终: ${last} url=${task.publication?.url ?? "无"}`);
-    process.exit(last === "PUBLISHED" ? 0 : 1);
-  }
-}
-console.log("超时未达终态");
-process.exit(1);
+if (schedule.status !== 400) throw new Error("小红书真人交付边界失效：自动排程应被拒绝");
+console.log("✓ 小红书内容草稿可生成；自动排程按真人交付边界被拒绝");
+process.exit(0);
+
+export {};

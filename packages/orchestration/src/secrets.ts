@@ -17,6 +17,7 @@ export async function fetchSecretForRunner(
     `SELECT ac.workspace_id, ac.secret_encrypted, ac.secret_ref
      FROM account_connections ac
      WHERE ac.id = $1
+       AND ac.platform <> 'xiaohongshu'
        AND EXISTS (
          SELECT 1 FROM tasks t
          WHERE t.account_id = $1 AND t.runner_id = $2

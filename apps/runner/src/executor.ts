@@ -3,14 +3,12 @@ import { join } from "node:path";
 import type { AdapterContext, TaskEnvelope } from "@aipeople/contracts";
 import { verifyEnvelopeBinding } from "@aipeople/contracts";
 import { SimulatorAdapter } from "@aipeople/connector-simulator";
-import { RedbookAdapter } from "@aipeople/connector-redbook";
 import { WeiboCliAdapter } from "@aipeople/connector-weibo";
 import type { PlatformAdapter } from "@aipeople/contracts";
 import type { RunnerConfig, RunnerStore } from "./storage.js";
 
 const adapters: Record<string, PlatformAdapter> = {
   simulator: new SimulatorAdapter(),
-  redbook: new RedbookAdapter(),
   weibo_cli: new WeiboCliAdapter(),
 };
 

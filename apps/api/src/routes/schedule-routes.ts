@@ -24,6 +24,9 @@ export async function scheduleRoutes(app: FastifyInstance): Promise<void> {
   app.post("/schedules", { preHandler: requireEditor }, async (request, reply) => {
     const body = CreateScheduleSchema.safeParse(request.body);
     if (!body.success) return reply.code(400).send({ error: "bad_request", message: body.error.issues[0]?.message });
+    if (body.data.platform === "xiaohongshu") {
+      return reply.code(400).send({ error: "human_delivery_only", message: "第一版小红书仅支持内容生成、人工审核和复制导出；请由真人登录平台完成交付。" });
+    }
     const ws = (request as AuthedRequest).user.ws;
     const user = (request as AuthedRequest).user;
 

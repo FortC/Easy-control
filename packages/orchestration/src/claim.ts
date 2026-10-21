@@ -73,6 +73,7 @@ async function tryClaim(options: ClaimOptions): Promise<TaskEnvelope | null> {
     // 条件与参数按出现顺序构造，避免未引用参数
     const conditions: string[] = [];
     const params: unknown[] = [];
+    conditions.push("t.platform <> 'xiaohongshu'");
     const nextParam = (value: unknown): string => {
       params.push(value);
       return `$${params.length}`;

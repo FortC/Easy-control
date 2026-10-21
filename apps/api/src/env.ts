@@ -2,7 +2,13 @@ import { loadEnvFile, envNumber } from "@aipeople/server-kit";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+// esbuild CJS 打包中 import.meta.url 不可用：降级到 process.cwd()
+let rootDir = process.cwd();
+try {
+  rootDir = resolve(dirname(fileURLToPath(import.meta.url)), "../../..");
+} catch {
+  /* 打包环境使用 cwd */
+}
 loadEnvFile(rootDir);
 
 export const config = {

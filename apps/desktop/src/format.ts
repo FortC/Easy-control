@@ -6,7 +6,6 @@ export const PLATFORM_LABELS: Record<string, string> = {
 
 export const CHANNEL_LABELS: Record<string, string> = {
   simulator: "模拟器",
-  redbook: "redbook 实验适配器",
   weibo_cli: "微博官方 CLI",
   douyin_api: "抖音官方 API",
 };

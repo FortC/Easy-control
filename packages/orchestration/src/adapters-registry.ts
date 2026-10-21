@@ -1,6 +1,5 @@
 import type { Channel } from "@aipeople/contracts";
 import { SimulatorAdapter } from "@aipeople/connector-simulator";
-import { RedbookAdapter } from "@aipeople/connector-redbook";
 import { WeiboCliAdapter } from "@aipeople/connector-weibo";
 import { DouyinAdapter } from "@aipeople/connector-douyin";
 import type { AdapterCapability, PlatformAdapter } from "@aipeople/contracts";
@@ -13,7 +12,6 @@ const douyinConfig =
 
 const registry: Record<Channel, PlatformAdapter> = {
   simulator: new SimulatorAdapter(),
-  redbook: new RedbookAdapter(),
   weibo_cli: new WeiboCliAdapter(),
   douyin_api: new DouyinAdapter(douyinConfig),
 };

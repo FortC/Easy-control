@@ -8,11 +8,18 @@ import { contentRoutes } from "./routes/content-routes.js";
 import { scheduleRoutes } from "./routes/schedule-routes.js";
 import { taskRoutes } from "./routes/task-routes.js";
 import { miscRoutes } from "./routes/misc-routes.js";
+import { assistantRoutes } from './routes/assistant-routes.js';
 
 export async function buildServer() {
   const app = Fastify({
     logger: false,
     bodyLimit: 10 * 1024 * 1024,
+  });
+
+  app.addHook('onRequest', async (request, reply) => {
+    if (process.env.DESKTOP_SESSION_TOKEN && request.method !== 'OPTIONS' && request.headers['x-easycontrol-session'] !== process.env.DESKTOP_SESSION_TOKEN) {
+      return reply.code(403).send({ message: '仅允许本机应用会话访问' });
+    }
   });
 
   await app.register(cors, { origin: true });
@@ -29,6 +36,7 @@ export async function buildServer() {
   await app.register(scheduleRoutes);
   await app.register(taskRoutes);
   await app.register(miscRoutes);
+  await app.register(assistantRoutes);
 
   app.setErrorHandler((error: Error & { statusCode?: number }, _request, reply) => {
     const status = error.statusCode && error.statusCode >= 400 && error.statusCode < 500 ? error.statusCode : 500;

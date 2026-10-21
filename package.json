@@ -1,6 +1,6 @@
 {
-  "name": "aipeople",
-  "version": "0.3.0",
+  "name": "easy-control",
+  "version": "0.5.0",
   "private": true,
   "type": "module",
   "author": "clb <lamthebest@foxmail.com>",
@@ -16,25 +16,34 @@
     "dev:api": "tsx watch apps/api/src/main.ts",
     "dev:worker": "tsx watch apps/worker/src/main.ts",
     "dev:runner": "tsx apps/runner/src/main.ts",
-    "dev": "concurrently -n api,worker,runner -c blue,green,magenta \"pnpm dev:api\" \"pnpm dev:worker\" \"pnpm dev:runner\"",
+    "dev": "pnpm dev:desktop",
     "dev:desktop": "pnpm --filter @aipeople/desktop dev",
     "dist": "pnpm --filter @aipeople/desktop dist",
-    "release": "tsx scripts/make-installer.ts",
+    "release": "tsx scripts/build-windows.ts",
     "smoke": "tsx scripts/smoke.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "build": "tsc --noEmit -p tsconfig.json"
+    "build": "tsc --noEmit -p tsconfig.json",
+    "dev:services": "concurrently -n api,worker,runner -c blue,green,magenta \"pnpm dev:api\" \"pnpm dev:worker\" \"pnpm dev:runner\"",
+    "test:desktop": "tsx scripts/verify-standalone.ts"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
     "@types/node": "^22.10.0",
     "@types/pg": "^8.11.0",
     "concurrently": "^9.1.0",
+    "esbuild": "^0.28.2",
     "pg": "^8.13.0",
     "playwright": "^1.64.1",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0",
     "vitest": "^3.0.0",
     "wait-on": "^8.0.0"
+  },
+  "description": "独立 Windows 多平台运营与直播工作台",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FortC/Easy-control.git"
   }
 }

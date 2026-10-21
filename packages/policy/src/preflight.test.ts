@@ -94,16 +94,4 @@ describe("发布前检查", () => {
     expect(expectDenied(baseInput({ spentTodayCny: 120 }))).toBe("budget_exceeded");
   });
 
-  it("AIGC 声明：strict 下 redbook 通道转人工，in_text 放行", () => {
-    const redbook = baseInput();
-    redbook.task = { ...redbook.task, channel: "redbook" };
-    redbook.account = { ...redbook.account, channel: "redbook" };
-    expect(expectDenied(redbook)).toBe("aigc_declaration_unsupported");
-
-    const inText = baseInput();
-    inText.workspace = { ...inText.workspace, aigcPolicy: "in_text" };
-    inText.task = { ...inText.task, channel: "redbook" };
-    inText.account = { ...inText.account, channel: "redbook" };
-    expect(preflightCheck(inText).allowed).toBe(true);
-  });
 });

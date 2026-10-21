@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2022",
+    "jsx": "react-jsx",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "lib": ["ES2023", "DOM", "DOM.Iterable"],
@@ -21,6 +22,7 @@
     "apps/worker/src/**/*.ts",
     "apps/runner/src/**/*.ts",
     "apps/desktop/src/**/*.ts",
+    "apps/desktop/src/**/*.tsx",
     "apps/desktop/vite.config.ts",
     "scripts/**/*.ts",
     "infra/db/*.ts"

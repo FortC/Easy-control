@@ -17,7 +17,7 @@ const PrepareSchema = z.object({
   targets: z
     .array(z.object({ platform: z.string().refine(isPlatform), accountId: z.string().min(1) }))
     .min(1)
-    .max(3),
+    .max(4),
   sourceIds: z.array(z.string()).optional(),
 });
 

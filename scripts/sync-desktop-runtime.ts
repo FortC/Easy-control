@@ -1,0 +1,23 @@
+import { cpSync, existsSync, mkdirSync } from 'node:fs';
+import { createRequire } from 'node:module';
+import { dirname, join, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import * as esbuild from 'esbuild';
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+const desktopDir = join(root, 'apps/desktop');
+const resources = join(desktopDir, 'resources');
+const desktopRequire = createRequire(join(desktopDir, 'package.json'));
+cpSync(join(root, 'LICENSE'), join(resources, 'LICENSE.txt'));
+cpSync(join(root, 'NOTICE'), join(resources, 'NOTICE.txt'));
+cpSync(join(root, 'apps/desktop/resources/license.txt'), join(resources, 'icons-license.txt'));
+console.log('✓ Apache-2.0 / MIT / icon attribution notices');
+cpSync(join(root, 'infra/db/migrations'), join(resources, 'migrations'), { recursive: true });
+await esbuild.build({ entryPoints: [join(desktopDir, 'src/backend-entry.ts')], outfile: join(desktopDir, 'electron/backend.cjs'), bundle: true, platform: 'node', format: 'cjs', target: 'node22', logLevel: 'warning', legalComments: 'eof' });
+const pgliteRoot = resolve(dirname(desktopRequire.resolve('@electric-sql/pglite')), '..');
+cpSync(pgliteRoot, join(resources, 'pglite'), { recursive: true, dereference: true });
+const npmSource = join(dirname(process.execPath), 'node_modules', 'npm');
+if (!existsSync(join(npmSource, 'bin/npm-cli.js'))) throw new Error('构建机 npm 运行时缺失');
+mkdirSync(join(resources, 'tool-runtime'), { recursive: true });
+cpSync(npmSource, join(resources, 'tool-runtime/npm'), { recursive: true, dereference: true });
+console.log('✓ 本地引擎、迁移、PGlite 和 CLI 安装运行时已就绪');
+

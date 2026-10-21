@@ -54,7 +54,7 @@ app.post("/auth/local", async () => {
         [randomId("mp"), workspaceId],
       );
       const simulators = [
-        { platform: "xiaohongshu", action: "publish_image_note", name: "模拟小红书账号" },
+        { platform: "xiaohongshu", action: "publish_image_note", name: "小红书人工交付工作区" },
         { platform: "weibo", action: "publish_post", name: "模拟微博账号" },
         { platform: "douyin", action: "publish_video", name: "模拟抖音账号" },
       ];
@@ -62,8 +62,16 @@ app.post("/auth/local", async () => {
         const accountId = randomId("acct");
         await client.query(
           `INSERT INTO account_connections (id, workspace_id, platform, channel, uid, display_name, capabilities, risk_note)
-           VALUES ($1, $2, $3, 'simulator', $4, $5, $6::jsonb, '演示通道，不连接真实平台')`,
-          [accountId, workspaceId, sim.platform, randomId("sim"), sim.name, JSON.stringify([sim.action, "pull_metrics"])],
+           VALUES ($1, $2, $3, 'simulator', $4, $5, $6::jsonb, $7)`,
+          [
+            accountId,
+            workspaceId,
+            sim.platform,
+            randomId("sim"),
+            sim.name,
+            JSON.stringify(sim.platform === "xiaohongshu" ? ["human_review", "content_export"] : [sim.action, "pull_metrics"]),
+            sim.platform === "xiaohongshu" ? "人工交付工作区：不连接平台，不保存账号会话或凭据" : "演示通道，不连接真实平台",
+          ],
         );
         await client.query(
           `INSERT INTO capability_grants (id, workspace_id, account_id, platform, action, channel, evidence)

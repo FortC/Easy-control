@@ -12,7 +12,7 @@ import {
   RefreshCw,
   ServerOff,
 } from "lucide-react";
-import { API_BASE, ensureLocalLogin, logout } from "./api.js";
+import { currentApiBase, ensureLocalLogin, logout, onBackendFailed } from "./api.js";
 import OverviewPage from "./pages/OverviewPage.js";
 import AccountsPage from "./pages/AccountsPage.js";
 import ModelsPage from "./pages/ModelsPage.js";
@@ -92,7 +92,7 @@ function ConnectingScreen() {
 }
 
 function ConnectErrorScreen({ message }: { message: string }) {
-  const [backend, setBackend] = useState(API_BASE);
+  const [backend, setBackend] = useState(currentApiBase());
   return (
     <div className="login-wrap">
       <div className="login-card">
@@ -139,6 +139,14 @@ function ConnectErrorScreen({ message }: { message: string }) {
 export default function App() {
   const [phase, setPhase] = useState<"connecting" | "ready" | "error">("connecting");
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    const off = onBackendFailed((message) => {
+      setError(message);
+      setPhase("error");
+    });
+    return off;
+  }, []);
 
   async function connect() {
     setPhase("connecting");
